@@ -2,6 +2,7 @@
 
 import threading
 import webbrowser
+from functools import lru_cache
 
 import dash
 from dash import Input, Output, State, callback_context
@@ -16,6 +17,20 @@ from .utils.constants import SPORT_ICONS, CATEGORY_COLORS
 
 ctrl = DashboardController()
 ctrl.ensure_loaded()
+
+
+@lru_cache(maxsize=32)
+def _render_cached(file_id: str, uirevision: str):
+    """
+    Cache rendered content per (file_id, uirevision).
+    uirevision changes on reload/refresh → cache miss → fresh figures with
+    reset Plotly zoom/pan state. Repeat selections of the same activity hit
+    the cache and return in <10 ms instead of ~500 ms.
+    Cache is intentionally NOT invalidated on ctrl.reload() — the new
+    uirevision produced after a reload guarantees a cache miss automatically.
+    """
+    activity = ctrl.get_activity(file_id)
+    return build_main_content(activity, uirevision=uirevision)
 
 app = dash.Dash(
     __name__,
@@ -83,7 +98,7 @@ def render_activity(store_data, reload_data, refresh_clicks):
     uirevision   = f"{activity.file_id}_{total_clicks}"
 
     title   = f"{activity.sport}  |  {activity.date_str}  |  {activity.distance_km} km"
-    content = build_main_content(activity, uirevision=uirevision)
+    content = _render_cached(activity.file_id, uirevision)
     return title, content
 
 
