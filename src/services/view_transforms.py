@@ -24,6 +24,13 @@ def chart_dataframe(activity: Activity) -> pd.DataFrame:
     if "pace" in df.columns:
         df.loc[df["pace"] > MAX_VALID_PACE_MIN_KM, "pace"] = None
 
+    if __debug__ and len(df) != len(activity.samples):
+        raise RuntimeError(
+            f"chart_dataframe invariant violated: "
+            f"df has {len(df)} rows but activity has {len(activity.samples)} samples. "
+            "Never drop rows — clientside hover maps pointIndex → samples[i] directly."
+        )
+
     return df
 
 
