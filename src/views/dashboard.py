@@ -76,7 +76,8 @@ def _chart_section(activity):
         return html.P("No chart data available.", className="text-muted")
 
     parts = [
-        dcc.Graph(figure=fig,
+        dcc.Graph(id="summary-chart",
+                  figure=fig,
                   config={"displayModeBar": True,
                           "modeBarButtonsToRemove": ["select2d", "lasso2d"],
                           "displaylogo": False},

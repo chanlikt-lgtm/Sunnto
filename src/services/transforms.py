@@ -47,6 +47,34 @@ def lap_table(activity: Activity) -> list:
     return rows
 
 
+def find_sample_at_time(activity: Activity, time_min: float):
+    """
+    Return the Sample (with GPS) closest to time_min (minutes).
+    Uses bisect for O(log n) lookup.
+    """
+    import bisect
+    target_s = time_min * 60.0
+    gps_samples = [s for s in activity.samples if s.lat is not None]
+    if not gps_samples:
+        return None
+    times = [s.time_s for s in gps_samples]
+    idx = bisect.bisect_left(times, target_s)
+    idx = max(0, min(idx, len(gps_samples) - 1))
+    return gps_samples[idx]
+
+
+def lap_cumulative_minutes(activity: Activity) -> list:
+    """Return cumulative time (minutes) at each lap boundary (excluding last)."""
+    if not activity.metrics or not activity.metrics.laps:
+        return []
+    times = []
+    t = 0.0
+    for lap in activity.metrics.laps[:-1]:
+        t += (lap.duration_s or 0) / 60.0
+        times.append(t)
+    return times
+
+
 def _fmt_dur(s):
     if not s:
         return "--"

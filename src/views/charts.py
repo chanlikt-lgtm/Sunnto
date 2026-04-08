@@ -6,7 +6,7 @@ import pandas as pd
 from typing import Optional
 
 from ..models.activity import Activity
-from ..services.transforms import chart_dataframe
+from ..services.transforms import chart_dataframe, lap_cumulative_minutes
 from ..utils.constants import CHART_COLORS
 from ..utils.datetime_utils import format_pace
 
@@ -79,13 +79,47 @@ def build_summary_chart(activity: Activity) -> Optional[go.Figure]:
         height=rows * _HEIGHT,
         showlegend=False,
         margin=dict(l=60, r=20, t=35, b=45),
-        uirevision="activity",   # preserve zoom/pan state across callbacks
+        uirevision="activity",
+        # ── Unified crosshair hover ──────────────────────────────────────────
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="#1e1e3a",
+            bordercolor="#333",
+            font=dict(size=12, color="#eee"),
+        ),
     )
-    fig.update_xaxes(title_text="Time (min)", row=rows, col=1)
-    # Style all subplot backgrounds
+    fig.update_xaxes(
+        title_text="Time (min)", row=rows, col=1,
+        # Spike line (vertical crosshair across all panels)
+        showspikes=True,
+        spikecolor="#666",
+        spikethickness=1,
+        spikedash="dot",
+        spikemode="across+toaxis",
+        spikesnap="cursor",
+    )
     for r in range(1, rows + 1):
-        fig.update_xaxes(showgrid=True, gridcolor="#1e1e3a", row=r, col=1)
-        fig.update_yaxes(showgrid=True, gridcolor="#1e1e3a", row=r, col=1)
+        fig.update_xaxes(showgrid=True, gridcolor="#1e1e3a",
+                         showspikes=True, spikecolor="#666",
+                         spikethickness=1, spikedash="dot",
+                         spikemode="across", row=r, col=1)
+        fig.update_yaxes(showgrid=True, gridcolor="#1e1e3a",
+                         showspikes=True, spikecolor="#444",
+                         spikethickness=1, spikedash="dot",
+                         row=r, col=1)
+
+    # ── Lap boundary markers ─────────────────────────────────────────────────
+    lap_times = lap_cumulative_minutes(activity)
+    for i, t_min in enumerate(lap_times):
+        fig.add_vline(
+            x=t_min,
+            line_width=1,
+            line_dash="dash",
+            line_color="#444",
+            annotation_text=f"L{i+2}",
+            annotation_position="top left",
+            annotation_font=dict(size=10, color="#666"),
+        )
 
     return fig
 

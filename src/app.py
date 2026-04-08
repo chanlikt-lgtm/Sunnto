@@ -1,7 +1,7 @@
 """Dash application — entry point."""
 
 import dash
-from dash import Input, Output, State, callback_context
+from dash import Input, Output, State, callback_context, Patch, no_update
 import dash_bootstrap_components as dbc
 
 from .controllers.dashboard_controller import DashboardController
@@ -63,6 +63,40 @@ def update_main(file_id, _reload_btn, _reload_store):
 )
 def trigger_reload(n):
     return n
+
+
+@app.callback(
+    Output("map-graph", "figure"),
+    Input("summary-chart", "hoverData"),
+    State("activity-dropdown", "value"),
+    prevent_initial_call=True,
+)
+def sync_map_cursor(hover_data, file_id):
+    """Move the white cursor marker on the map to match chart hover position."""
+    if not hover_data or not file_id:
+        return no_update
+
+    activity = ctrl.get_activity(file_id)
+    if not activity or not activity.has_gps():
+        return no_update
+
+    try:
+        time_min = hover_data["points"][0]["x"]
+    except (KeyError, IndexError):
+        return no_update
+
+    from .services.transforms import find_sample_at_time
+    from .controllers.map_controller import CURSOR_TRACE
+
+    sample = find_sample_at_time(activity, time_min)
+    if sample is None:
+        return no_update
+
+    # Patch only the cursor trace — no figure rebuild
+    patched = Patch()
+    patched["data"][CURSOR_TRACE]["lat"] = [sample.lat]
+    patched["data"][CURSOR_TRACE]["lon"] = [sample.lon]
+    return patched
 
 
 # ── Run ────────────────────────────────────────────────────────────────────────
