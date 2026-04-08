@@ -90,39 +90,20 @@ def build_summary_chart(activity: Activity,
         showlegend=False,
         margin=dict(l=65, r=20, t=35, b=45),
         uirevision=uirevision,
-        # Single tooltip box showing all values at cursor x
+        # Unified tooltip: one box with all trace values at cursor x
         hovermode="x unified",
         hoverlabel=dict(
             bgcolor="rgba(15,15,40,0.95)",
             bordercolor="#555",
             font=dict(size=13, color="#ffffff"),
-            namelength=-1,          # show full trace name
+            namelength=-1,
         ),
     )
 
-    # ── Spike / crosshair — applied globally to ALL subplot x-axes ────────────
-    # Calling update_xaxes without row/col applies to every subplot at once.
-    fig.update_xaxes(
-        showgrid=True,
-        gridcolor="#1e1e3a",
-        # Vertical spike line follows cursor across all panels
-        showspikes=True,
-        spikecolor="#cccccc",       # bright enough to see
-        spikethickness=1.5,
-        spikedash="solid",          # solid line, not dotted
-        spikemode="across+toaxis",  # crosses full height + shows on axis
-        spikesnap="cursor",
-    )
-    fig.update_yaxes(
-        showgrid=True,
-        gridcolor="#1e1e3a",
-        # Horizontal spike on y (shows value marker on the y-axis)
-        showspikes=True,
-        spikecolor="#666666",
-        spikethickness=1,
-        spikedash="dot",
-    )
-    # Title on bottom x-axis only
+    # Grid + bottom x label
+    fig.update_xaxes(showgrid=True, gridcolor="#1e1e3a",
+                     showspikes=False)   # disabled — shape handles crosshair
+    fig.update_yaxes(showgrid=True, gridcolor="#1e1e3a", showspikes=False)
     fig.update_xaxes(title_text="Time (min)", row=rows, col=1)
 
     # ── Lap boundary lines ────────────────────────────────────────────────────
@@ -136,6 +117,19 @@ def build_summary_chart(activity: Activity,
             annotation_position="top left",
             annotation_font=dict(size=10, color="#778"),
         )
+
+    # ── Full-height crosshair shape (MUST be last shape) ─────────────────────
+    # xref="x"     → x position in shared data coordinates (minutes)
+    # yref="paper" → y spans 0–1 = entire figure = ALL subplot panels
+    # Updated by on_chart_hover callback via Patch()["layout"]["shapes"][-1]
+    fig.add_shape(
+        type="line",
+        xref="x", yref="paper",
+        x0=0, x1=0,
+        y0=0, y1=1,
+        line=dict(color="rgba(200,200,255,0)", width=0),  # invisible until hover
+        layer="above",
+    )
 
     return fig
 

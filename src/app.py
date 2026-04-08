@@ -1,5 +1,8 @@
 """Dash application — entry point."""
 
+import threading
+import webbrowser
+
 import dash
 from dash import Input, Output, State, callback_context, Patch, no_update
 import dash_bootstrap_components as dbc
@@ -34,8 +37,8 @@ app.layout = build_layout(
     Output("main-content",      "children"),
     Output("activity-dropdown", "options"),
     Input("activity-dropdown",  "value"),
-    Input("reload-btn",         "n_clicks"),   # sidebar Reload Data
-    Input("refresh-btn",        "n_clicks"),   # header Refresh (resets zoom)
+    Input("reload-btn",         "n_clicks"),
+    Input("refresh-btn",        "n_clicks"),
     Input("reload-store",       "data"),
     prevent_initial_call=False,
 )
@@ -51,8 +54,6 @@ def update_main(file_id, reload_clicks, refresh_clicks, _reload_store):
     if activity is None:
         return "No activity", build_main_content(None), options
 
-    # uirevision changes whenever activity switches OR Refresh is clicked
-    # → Plotly resets zoom/pan to default on every such event
     total_clicks = (reload_clicks or 0) + (refresh_clicks or 0)
     uirevision   = f"{activity.file_id}_{total_clicks}"
 
@@ -71,46 +72,75 @@ def trigger_reload(n):
 
 
 @app.callback(
-    Output("map-graph", "figure"),
-    Input("summary-chart", "hoverData"),
+    Output("summary-chart", "figure"),   # Patch: move crosshair shape
+    Output("map-graph",     "figure"),   # Patch: move red cursor dot
+    Input("summary-chart",  "hoverData"),
     State("activity-dropdown", "value"),
     prevent_initial_call=True,
 )
-def sync_map_cursor(hover_data, file_id):
-    """Move the white cursor marker on the map to match chart hover position."""
+def on_chart_hover(hover_data, file_id):
+    """
+    Single callback fired on every chart hover:
+      1. Moves the full-height crosshair line across ALL subplot panels.
+      2. Moves the red GPS cursor on the map.
+    Both updates use Patch() — only the changed fields are sent to the browser.
+    """
     if not hover_data or not file_id:
-        return no_update
-
-    activity = ctrl.get_activity(file_id)
-    if not activity or not activity.has_gps():
-        return no_update
+        return no_update, no_update
 
     try:
         time_min = hover_data["points"][0]["x"]
     except (KeyError, IndexError):
-        return no_update
+        return no_update, no_update
+
+    # ── 1. Crosshair: update the last shape (always the crosshair) ────────────
+    chart_patch = Patch()
+    chart_patch["layout"]["shapes"][-1]["x0"] = time_min
+    chart_patch["layout"]["shapes"][-1]["x1"] = time_min
+    chart_patch["layout"]["shapes"][-1]["line"]["color"] = "rgba(200,200,255,0.75)"
+    chart_patch["layout"]["shapes"][-1]["line"]["width"] = 1.5
+
+    # ── 2. Map cursor: find GPS at this time ──────────────────────────────────
+    activity = ctrl.get_activity(file_id)
+    if not activity or not activity.has_gps():
+        return chart_patch, no_update
 
     from .services.transforms import find_sample_at_time
     from .controllers.map_controller import CURSOR_TRACE
 
     sample = find_sample_at_time(activity, time_min)
-    if sample is None:
-        return no_update
+    if sample is None or sample.lat is None:
+        return chart_patch, no_update
 
-    # Patch only the cursor trace — no figure rebuild
-    patched = Patch()
-    patched["data"][CURSOR_TRACE]["lat"] = [sample.lat]
-    patched["data"][CURSOR_TRACE]["lon"] = [sample.lon]
-    return patched
+    map_patch = Patch()
+    map_patch["data"][CURSOR_TRACE]["lat"] = [sample.lat]
+    map_patch["data"][CURSOR_TRACE]["lon"] = [sample.lon]
+
+    return chart_patch, map_patch
 
 
 # ── Run ────────────────────────────────────────────────────────────────────────
 
+def _open_browser(url: str, delay: float = 1.5):
+    """Open browser after a short delay to let the server start."""
+    import time
+    time.sleep(delay)
+    webbrowser.open(url)
+
+
 if __name__ == "__main__":
-    cfg = ctrl.config["app"]
-    print(f"\n  Fitness Dashboard starting on http://{cfg.get('host','127.0.0.1')}:{cfg.get('port',8050)}/\n")
+    cfg  = ctrl.config["app"]
+    host = cfg.get("host", "127.0.0.1")
+    port = cfg.get("port", 8050)
+    url  = f"http://{host}:{port}/"
+
+    print(f"\n  Fitness Dashboard -> {url}\n")
+
+    # Auto-open browser (daemon thread exits when main process exits)
+    threading.Thread(target=_open_browser, args=(url,), daemon=True).start()
+
     app.run(
         debug=cfg.get("debug", True),
-        host=cfg.get("host", "127.0.0.1"),
-        port=cfg.get("port", 8050),
+        host=host,
+        port=port,
     )
