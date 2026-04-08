@@ -7,7 +7,7 @@ from typing import Optional
 
 from ..models.activity import Activity
 from ..services.transforms import chart_dataframe, lap_cumulative_minutes
-from ..utils.constants import CHART_COLORS
+from ..utils.constants import CHART_COLORS, PACE_SLOW_MIN_KM, PACE_FAST_MIN_KM, HR_MAX_DEFAULT
 from ..utils.datetime_utils import format_pace
 
 
@@ -201,7 +201,7 @@ def _add_hr_zone_bands(fig, df: pd.DataFrame, activity: Activity, row: int):
     if not hz:
         return
 
-    hr_max = (df["hr"].max() if df["hr"].notna().any() else 220) * 1.06
+    hr_max = (df["hr"].max() if df["hr"].notna().any() else HR_MAX_DEFAULT) * 1.06
     thresholds = hz.thresholds_bpm()
     if not any(thresholds):
         thresholds = [hr_max * p for p in (0.60, 0.70, 0.80, 0.90)]

@@ -64,6 +64,11 @@ CATEGORY_COLORS = {
     "sleep":     "#c084fc",   # purple
 }
 
+# Domain thresholds (used for chart colour scales and HR zone rendering)
+PACE_SLOW_MIN_KM  = 8.0    # min/km — red end of pace colour scale
+PACE_FAST_MIN_KM  = 4.5    # min/km — green end of pace colour scale
+HR_MAX_DEFAULT    = 220     # bpm  — fallback when no HR data to set zone ceiling
+
 # Unit conversions
 RAD_TO_DEG = 57.29577951308232    # 180/pi
 HZ_TO_BPM  = 60.0                 # multiply HR samples

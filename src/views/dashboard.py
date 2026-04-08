@@ -23,6 +23,25 @@ def build_layout(activity_options: list, sport_options: list) -> html.Div:
                                   className="h4 mb-0 text-white fw-bold"), width="auto"),
                 dbc.Col(dbc.Button("Refresh", id="refresh-btn",
                                    color="outline-light", size="sm"), width="auto"),
+                dbc.Col(
+                    html.Div(
+                        id="cursor-distance",
+                        children="— km",
+                        style={
+                            "background":   "#1a1a2e",
+                            "border":       "1px solid #3fb950",
+                            "borderRadius": "6px",
+                            "padding":      "3px 14px",
+                            "color":        "#3fb950",
+                            "fontWeight":   "700",
+                            "fontSize":     "0.95rem",
+                            "minWidth":     "90px",
+                            "textAlign":    "center",
+                            "letterSpacing":"0.03em",
+                        },
+                    ),
+                    width="auto",
+                ),
             ], className="align-items-center mb-3 pt-3 px-3"),
 
             # Content area

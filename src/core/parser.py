@@ -6,7 +6,7 @@ from typing import Dict, Any, List
 from ..models.sample import Sample
 from ..models.metrics import ActivityMetrics, HrZones, Lap
 from ..utils.constants import RAD_TO_DEG, HZ_TO_BPM, HZ_TO_RPM, K_TO_C
-from ..utils.datetime_utils import parse_iso
+from ..utils.datetime_utils import parse_iso, speed_to_pace
 
 
 def parse_suunto_json(data: Dict[str, Any], file_id: str):
@@ -69,7 +69,7 @@ def _parse_samples(raw: list, start_time) -> List[Sample]:
         if "Speed" in entry and entry["Speed"] is not None:
             v = entry["Speed"]
             last["speed"] = round(v, 3)
-            last["pace"]  = round(1000.0 / (v * 60.0), 2) if v > 0.05 else None
+            last["pace"]  = speed_to_pace(v)
 
         if "Altitude" in entry and entry["Altitude"] is not None:
             last["altitude"] = round(entry["Altitude"], 1)
@@ -142,7 +142,7 @@ def _parse_metrics(header: dict, windows: list) -> ActivityMetrics:
         avg_hr   = (hr_list[0].get("Avg") or 0) * HZ_TO_BPM if hr_list else None
         avg_spd_list = win.get("Speed") or [{}]
         avg_spd  = avg_spd_list[0].get("Avg") if avg_spd_list else None
-        avg_pace = round(1000.0 / (avg_spd * 60.0), 2) if avg_spd and avg_spd > 0.05 else None
+        avg_pace = speed_to_pace(avg_spd)
         laps.append(Lap(
             index=i + 1,
             distance_m=dist,

@@ -37,6 +37,13 @@ def format_duration(seconds: float) -> str:
     return f"{m}:{s:02d}"
 
 
+def speed_to_pace(mps: float):
+    """Convert speed (m/s) → pace (min/km). Returns None if speed is too low."""
+    if mps is None or mps <= 0.05:
+        return None
+    return round(1000.0 / (mps * 60.0), 2)
+
+
 def format_pace(min_per_km: float) -> str:
     """Format decimal min/km as M:SS /km."""
     if min_per_km is None or min_per_km <= 0 or min_per_km > 59:

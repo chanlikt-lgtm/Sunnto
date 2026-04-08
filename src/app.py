@@ -111,51 +111,56 @@ def trigger_reload(n):
 
 
 @app.callback(
-    Output("summary-chart", "figure"),   # Patch: move crosshair shape
-    Output("map-graph",     "figure"),   # Patch: move red cursor dot
-    Input("summary-chart",  "hoverData"),
+    Output("summary-chart",   "figure"),   # Patch: crosshair
+    Output("map-graph",       "figure"),   # Patch: GPS cursor
+    Output("cursor-distance", "children"), # live distance box
+    Input("summary-chart",    "hoverData"),
     State("activity-dropdown", "value"),
     prevent_initial_call=True,
 )
 def on_chart_hover(hover_data, file_id):
     """
-    Single callback fired on every chart hover:
-      1. Moves the full-height crosshair line across ALL subplot panels.
+    Fired on every chart hover:
+      1. Moves the full-height crosshair across all subplot panels.
       2. Moves the red GPS cursor on the map.
-    Both updates use Patch() — only the changed fields are sent to the browser.
+      3. Updates the distance box in the header.
     """
     if not hover_data or not file_id:
-        return no_update, no_update
+        return no_update, no_update, no_update
 
     try:
         time_min = hover_data["points"][0]["x"]
     except (KeyError, IndexError):
-        return no_update, no_update
+        return no_update, no_update, no_update
 
-    # ── 1. Crosshair: update the last shape (always the crosshair) ────────────
+    # ── 1. Crosshair ──────────────────────────────────────────────────────────
     chart_patch = Patch()
     chart_patch["layout"]["shapes"][-1]["x0"] = time_min
     chart_patch["layout"]["shapes"][-1]["x1"] = time_min
     chart_patch["layout"]["shapes"][-1]["line"]["color"] = "rgba(200,200,255,0.75)"
     chart_patch["layout"]["shapes"][-1]["line"]["width"] = 1.5
 
-    # ── 2. Map cursor: find GPS at this time ──────────────────────────────────
     activity = ctrl.get_activity(file_id)
-    if not activity or not activity.has_gps():
-        return chart_patch, no_update
+    if not activity:
+        return chart_patch, no_update, no_update
 
-    from .services.transforms import find_sample_at_time
+    from .services.transforms import find_sample_at_time, find_distance_at_time
     from .controllers.map_controller import CURSOR_TRACE
 
-    sample = find_sample_at_time(activity, time_min)
-    if sample is None or sample.lat is None:
-        return chart_patch, no_update
+    # ── 2. GPS cursor ─────────────────────────────────────────────────────────
+    map_patch = no_update
+    if activity.has_gps():
+        sample = find_sample_at_time(activity, time_min)
+        if sample and sample.lat is not None:
+            map_patch = Patch()
+            map_patch["data"][CURSOR_TRACE]["lat"] = [sample.lat]
+            map_patch["data"][CURSOR_TRACE]["lon"] = [sample.lon]
 
-    map_patch = Patch()
-    map_patch["data"][CURSOR_TRACE]["lat"] = [sample.lat]
-    map_patch["data"][CURSOR_TRACE]["lon"] = [sample.lon]
+    # ── 3. Distance box ───────────────────────────────────────────────────────
+    dist_km   = find_distance_at_time(activity, time_min)
+    dist_text = f"{dist_km:.2f} km" if dist_km > 0 else "0.00 km"
 
-    return chart_patch, map_patch
+    return chart_patch, map_patch, dist_text
 
 
 # ── Run ────────────────────────────────────────────────────────────────────────

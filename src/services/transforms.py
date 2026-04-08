@@ -63,6 +63,22 @@ def find_sample_at_time(activity: Activity, time_min: float):
     return gps_samples[idx]
 
 
+def find_distance_at_time(activity: Activity, time_min: float) -> float:
+    """
+    Return cumulative distance (km) at time_min by finding the nearest
+    sample that has a distance value. O(log n) bisect lookup.
+    """
+    import bisect
+    dist_samples = [s for s in activity.samples if s.distance is not None]
+    if not dist_samples:
+        return 0.0
+    times = [s.time_s for s in dist_samples]
+    target_s = time_min * 60.0
+    idx = bisect.bisect_left(times, target_s)
+    idx = max(0, min(idx, len(dist_samples) - 1))
+    return dist_samples[idx].distance / 1000.0
+
+
 def lap_cumulative_minutes(activity: Activity) -> list:
     """Return cumulative time (minutes) at each lap boundary (excluding last)."""
     if not activity.metrics or not activity.metrics.laps:

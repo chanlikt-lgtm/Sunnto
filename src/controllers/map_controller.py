@@ -5,10 +5,7 @@ import plotly.graph_objects as go
 import folium
 from ..models.activity import Activity
 from ..services.transforms import gps_track
-
-# Pace colour scale bounds (min/km)
-_PACE_SLOW = 8.0
-_PACE_FAST = 4.5
+from ..utils.constants import PACE_SLOW_MIN_KM, PACE_FAST_MIN_KM
 
 # Trace indices in the Plotly map figure (must match build_plotly_map order)
 TRACK_TRACE  = 0
@@ -143,14 +140,14 @@ def _pace_norm(pace) -> float:
     """Normalise pace to 0..1 for colorscale (0=fast/green, 1=slow/red)."""
     if pace is None or pace <= 0 or pace > 30:
         return 0.5
-    t = (pace - _PACE_FAST) / (_PACE_SLOW - _PACE_FAST)
+    t = (pace - PACE_FAST_MIN_KM) / (PACE_SLOW_MIN_KM - PACE_FAST_MIN_KM)
     return max(0.0, min(1.0, t))
 
 
 def _pace_to_hex(pace) -> str:
     if pace is None or pace <= 0 or pace > 30:
         return "#888888"
-    t = (pace - _PACE_FAST) / (_PACE_SLOW - _PACE_FAST)
+    t = (pace - PACE_FAST_MIN_KM) / (PACE_SLOW_MIN_KM - PACE_FAST_MIN_KM)
     t = max(0.0, min(1.0, t))
     hue = 0.33 * (1.0 - t)
     r, g, b = colorsys.hsv_to_rgb(hue, 0.85, 0.95)
