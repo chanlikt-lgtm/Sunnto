@@ -1,0 +1,100 @@
+/* ── Global ───────────────────────────────────────────────────────────────── */
+body {
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: #0d0d1a;
+    color: #e0e0e0;
+}
+
+/* ── Custom scrollbar ────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #0d0d1a; }
+::-webkit-scrollbar-thumb { background: #2a2a50; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a70; }
+
+/* ── Stat cards ──────────────────────────────────────────────────────────── */
+.card {
+    border-radius: 12px !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    backdrop-filter: blur(4px);
+}
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+}
+.card-body {
+    padding: 10px 14px !important;
+}
+
+/* ── Sidebar text & controls ─────────────────────────────────────────────── */
+#activity-dropdown .Select-control,
+.Select-control {
+    background: #12122a !important;
+    border: 1px solid #2a2a50 !important;
+    border-radius: 8px !important;
+    color: #e0e0e0 !important;
+}
+.Select-value-label { color: #e0e0e0 !important; }
+.Select-menu-outer {
+    background: #1a1a3a !important;
+    border: 1px solid #2a2a50 !important;
+    border-radius: 8px !important;
+}
+.Select-option {
+    background: #1a1a3a !important;
+    color: #ccc !important;
+    font-size: 0.85rem;
+}
+.Select-option.is-focused { background: #252550 !important; color: #fff !important; }
+.Select-option.is-selected { background: #2e2e70 !important; color: #fff !important; }
+
+/* ── Radio & Checklist ───────────────────────────────────────────────────── */
+.form-check-label { color: #bbb; font-size: 0.85rem; }
+.form-check-input:checked { background-color: #3fb950; border-color: #3fb950; }
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn-outline-secondary {
+    border-color: #2a2a50 !important;
+    color: #aaa !important;
+}
+.btn-outline-secondary:hover {
+    background: #2a2a50 !important;
+    color: #fff !important;
+}
+
+/* ── Chart containers ────────────────────────────────────────────────────── */
+.js-plotly-plot .plotly .main-svg {
+    border-radius: 10px;
+}
+
+/* ── Activity title ──────────────────────────────────────────────────────── */
+#activity-title {
+    font-size: 1.05rem;
+    letter-spacing: 0.03em;
+    color: #c8d8ff !important;
+}
+
+/* ── Section headings ────────────────────────────────────────────────────── */
+h6.text-secondary {
+    font-size: 0.7rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #555 !important;
+    border-bottom: 1px solid #1e1e3a;
+    padding-bottom: 4px;
+    margin-bottom: 10px !important;
+}
+
+/* ── DataTable overrides ──────────────────────────────────────────────────── */
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td,
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner th {
+    font-size: 0.82rem !important;
+}
+
+/* ── Map iframe ──────────────────────────────────────────────────────────── */
+iframe {
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+/* ── Sidebar dividers ────────────────────────────────────────────────────── */
+hr { border-color: #1e1e3a !important; }

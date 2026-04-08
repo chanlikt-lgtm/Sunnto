@@ -1,0 +1,17 @@
+data:
+  json_folder: "E:/claude/suunto/JSON"
+  processed_folder: "data/processed"
+
+app:
+  title: "Fitness Dashboard"
+  port: 8050
+  debug: true
+  host: "127.0.0.1"
+
+chart:
+  height_px: 220
+  theme: "plotly_dark"
+
+map:
+  default_zoom: 14
+  tile: "OpenStreetMap"
