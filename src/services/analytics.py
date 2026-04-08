@@ -19,9 +19,11 @@ def compute_metrics(activity: Activity) -> Activity:
 
     Requires: activity.is_processed == True (core.processor.process() must run first).
     """
+    _id = f"{activity.file_id} @ {activity.date_str}"   # stable filename + human date
+
     if not activity.is_processed:
         raise RuntimeError(
-            f"compute_metrics() requires a processed activity ('{activity.file_id}' is not). "
+            f"compute_metrics() requires a processed activity ('{_id}' is not). "
             "Call core.processor.process() first."
         )
     if not activity.samples:
@@ -56,7 +58,7 @@ def compute_metrics(activity: Activity) -> Activity:
     # ── Sport category — set once here, read by views ─────────────────────────
     if activity.sport_category is not None:
         raise RuntimeError(
-            f"compute_metrics() called twice on the same activity ('{activity.file_id}'). "
+            f"compute_metrics() called twice on the same activity ('{_id}'). "
             "It must be called exactly once per activity instance."
         )
     activity.sport_category = classify_sport(activity)
