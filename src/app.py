@@ -74,8 +74,9 @@ def update_sport_badge(file_id):
     if activity is None:
         return html.Span("—", className="text-muted small")
 
+    from .services.sport_classifier import classify_sport
     sport     = activity.sport
-    category  = activity.sport_category
+    category  = classify_sport(activity)
     icon      = SPORT_ICONS.get(sport, "person-running")
     color     = CATEGORY_COLORS.get(category, "#aaa")
 

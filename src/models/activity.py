@@ -41,12 +41,6 @@ class Activity:
         return base
 
     @property
-    def sport_category(self) -> str:
-        """GUI rendering category: 'endurance', 'swimming', 'gym', or 'sleep'."""
-        from ..utils.sport_classifier import classify_sport
-        return classify_sport(self)
-
-    @property
     def distance_km(self) -> float:
         return round(self.distance_m / 1000, 2)
 
