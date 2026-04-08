@@ -1,9 +1,14 @@
-"""Unit conversion factors and pure conversion functions for Suunto sensor data.
+"""Pure unit conversion factors and functions.
 
-Rules:
-- Numeric factors (RAD_TO_DEG, HZ_TO_BPM, …) live here, not in constants.py.
-- constants.py is for domain thresholds and defaults, not math factors.
-- datetime_utils.py is for time/date formatting only.
+Contract (enforced in review):
+- Functions must be float → float or float → Optional[float] only.
+- No pandas, no DataFrames, no imports from services/ or views/.
+- No app-specific branching — these are physics/math, not business logic.
+
+Where things live:
+- units.py          → conversion factors + pure math functions  (this file)
+- constants.py      → domain thresholds, defaults, lookup tables
+- datetime_utils.py → time/date parsing and formatting only
 """
 
 # ── Conversion factors ─────────────────────────────────────────────────────────
