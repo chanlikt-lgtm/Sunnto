@@ -42,6 +42,8 @@ def build_main_content(activity, no_activity_msg: str = None,
         return html.Div(html.P(no_activity_msg or "Select an activity from the sidebar.",
                                className="text-muted py-5 text-center"))
 
+    from .map_view import build_map_section
+
     parts = [
         build_stat_cards(activity),
         html.H6("Performance Charts", className="text-secondary mb-2 mt-2"),
