@@ -2,6 +2,7 @@
 
 import pandas as pd
 from ..models.activity import Activity
+from ..utils.constants import MAX_VALID_PACE_MIN_KM
 from ..utils.datetime_utils import format_pace
 
 
@@ -14,9 +15,9 @@ def chart_dataframe(activity: Activity) -> pd.DataFrame:
     # Minutes axis
     df["min"] = df["time_s"] / 60.0
 
-    # Remove outlier pace values (> 30 min/km = walking in place)
+    # Remove outlier pace values above threshold (paused / noise)
     if "pace" in df.columns:
-        df.loc[df["pace"] > 30, "pace"] = None
+        df.loc[df["pace"] > MAX_VALID_PACE_MIN_KM, "pace"] = None
 
     return df
 

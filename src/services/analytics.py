@@ -7,6 +7,7 @@ Called by core/pipeline.py after processor.py has cleaned the samples.
 
 from ..models.activity import Activity
 from ..models.metrics import ActivityMetrics
+from ..utils.constants import MAX_VALID_PACE_MIN_KM
 
 
 def compute_metrics(activity: Activity) -> Activity:
@@ -38,7 +39,7 @@ def compute_metrics(activity: Activity) -> Activity:
     # ── Pace ───────────────────────────────────────────────────────────────────
     if "pace" in df.columns and df["pace"].notna().any():
         if m.avg_pace is None:
-            valid = df["pace"][(df["pace"] > 0) & (df["pace"] < 30)]
+            valid = df["pace"][(df["pace"] > 0) & (df["pace"] < MAX_VALID_PACE_MIN_KM)]
             m.avg_pace = round(float(valid.mean()), 2) if not valid.empty else None
 
     # ── Cadence ────────────────────────────────────────────────────────────────
