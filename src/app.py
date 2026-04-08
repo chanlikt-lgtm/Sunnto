@@ -34,43 +34,67 @@ app.layout = build_layout(
 # ── Callbacks ──────────────────────────────────────────────────────────────────
 
 @app.callback(
-    Output("activity-title",    "children"),
-    Output("main-content",      "children"),
-    Output("activity-dropdown", "options"),
-    Input("activity-dropdown",  "value"),
-    Input("reload-btn",         "n_clicks"),
-    Input("refresh-btn",        "n_clicks"),
-    Input("reload-store",       "data"),
+    Output("reload-store", "data"),
+    Input("reload-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+def trigger_reload(n):
+    return n
+
+
+@app.callback(
+    Output("selected-activity-store", "data"),
+    Output("activity-dropdown",       "options"),
+    Input("activity-dropdown",        "value"),
+    Input("reload-store",             "data"),
+    Input("refresh-btn",              "n_clicks"),
     prevent_initial_call=False,
 )
-def update_main(file_id, reload_clicks, refresh_clicks, _reload_store):
+def select_activity(file_id, _reload_store, _refresh_clicks):
     triggered = [t["prop_id"] for t in callback_context.triggered]
 
     if any("reload" in t for t in triggered):
         ctrl.reload()
 
-    activity = ctrl.get_activity(file_id) if file_id else ctrl.get_latest()
     options  = ctrl.get_activity_options()
+    activity = ctrl.get_activity(file_id) if file_id else ctrl.get_latest()
+    resolved_id = activity.file_id if activity else None
+
+    return {"file_id": resolved_id}, options
+
+
+@app.callback(
+    Output("activity-title", "children"),
+    Output("main-content",   "children"),
+    Input("selected-activity-store", "data"),
+    State("reload-store",            "data"),
+    State("refresh-btn",             "n_clicks"),
+    prevent_initial_call=False,
+)
+def render_activity(store_data, reload_data, refresh_clicks):
+    file_id = (store_data or {}).get("file_id")
+    activity = ctrl.get_activity(file_id) if file_id else None
 
     if activity is None:
-        return "No activity", build_main_content(None), options
+        return "No activity", build_main_content(None)
 
-    total_clicks = (reload_clicks or 0) + (refresh_clicks or 0)
+    total_clicks = (reload_data or 0) + (refresh_clicks or 0)
     uirevision   = f"{activity.file_id}_{total_clicks}"
 
     title   = f"{activity.sport}  |  {activity.date_str}  |  {activity.distance_km} km"
     content = build_main_content(activity, uirevision=uirevision)
-    return title, content, options
+    return title, content
 
 
 @app.callback(
     Output("sport-badge", "children"),
-    Input("activity-dropdown", "value"),
+    Input("selected-activity-store", "data"),
     prevent_initial_call=False,
 )
-def update_sport_badge(file_id):
+def update_sport_badge(store_data):
     from dash import html
-    activity = ctrl.get_activity(file_id) if file_id else ctrl.get_latest()
+    file_id  = (store_data or {}).get("file_id")
+    activity = ctrl.get_activity(file_id) if file_id else None
     if activity is None:
         return html.Span("—", className="text-muted small")
 
@@ -102,30 +126,21 @@ def update_sport_badge(file_id):
 
 
 @app.callback(
-    Output("reload-store", "data"),
-    Input("reload-btn", "n_clicks"),
-    prevent_initial_call=True,
-)
-def trigger_reload(n):
-    return n
-
-
-@app.callback(
     Output("summary-chart",   "figure"),   # Patch: crosshair
     Output("map-graph",       "figure"),   # Patch: GPS cursor
     Output("cursor-distance", "children"), # live distance box
     Input("summary-chart",    "hoverData"),
-    State("activity-dropdown", "value"),
+    State("selected-activity-store", "data"),
     prevent_initial_call=True,
 )
-def on_chart_hover(hover_data, file_id):
+def on_chart_hover(hover_data, store_data):
     """
     Fired on every chart hover:
       1. Moves the full-height crosshair across all subplot panels.
       2. Moves the red GPS cursor on the map.
       3. Updates the distance box in the header.
     """
-    if not hover_data or not file_id:
+    if not hover_data or not store_data:
         return no_update, no_update, no_update
 
     try:
@@ -140,7 +155,8 @@ def on_chart_hover(hover_data, file_id):
     chart_patch["layout"]["shapes"][-1]["line"]["color"] = "rgba(200,200,255,0.75)"
     chart_patch["layout"]["shapes"][-1]["line"]["width"] = 1.5
 
-    activity = ctrl.get_activity(file_id)
+    file_id  = store_data.get("file_id")
+    activity = ctrl.get_activity(file_id) if file_id else None
     if not activity:
         return chart_patch, no_update, no_update
 
