@@ -24,7 +24,7 @@ def load_all(folder: str) -> List[Activity]:
         try:
             file_id, data = load_json(path)
             act = parse_suunto_json(data, file_id)
-            act = process(act)          # clean: smooth, gap-fill
+            act = process(act)  # mutates samples in-place — see processor.py contract
             activities.append(act)
             print(f"[pipeline] Loaded: {act.label}")
         except Exception as e:
@@ -40,7 +40,7 @@ def load_one(path: str) -> Optional[Activity]:
     try:
         file_id, data = load_json(path)
         act = parse_suunto_json(data, file_id)
-        return process(act)
+        return process(act)  # mutates samples in-place — see processor.py contract
     except Exception as e:
         print(f"[pipeline] Error loading {path}: {e}")
         return None
