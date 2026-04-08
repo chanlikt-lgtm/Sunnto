@@ -11,6 +11,8 @@ Where things live:
 - datetime_utils.py → time/date parsing and formatting only
 """
 
+from .constants import MIN_MOVING_SPEED_MPS
+
 # ── Conversion factors ─────────────────────────────────────────────────────────
 RAD_TO_DEG = 57.29577951308232   # 180 / π  — lat/lon radians → degrees
 HZ_TO_BPM  = 60.0                # Hz → beats per minute  (HR, cadence)
@@ -21,7 +23,7 @@ K_TO_C     = -273.15             # Kelvin offset → Celsius
 # ── Conversion functions ───────────────────────────────────────────────────────
 
 def speed_to_pace(mps: float):
-    """Convert speed (m/s) → pace (min/km). Returns None if speed is too low."""
-    if mps is None or mps <= 0.05:
+    """Convert speed (m/s) → pace (min/km). Returns None if paused or stopped."""
+    if mps is None or mps <= MIN_MOVING_SPEED_MPS:
         return None
     return round(1000.0 / (mps * 60.0), 2)

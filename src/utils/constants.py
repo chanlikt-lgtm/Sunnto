@@ -65,9 +65,10 @@ CATEGORY_COLORS = {
 }
 
 # Domain thresholds (used for chart colour scales and HR zone rendering)
-PACE_SLOW_MIN_KM  = 8.0    # min/km — red end of pace colour scale
-PACE_FAST_MIN_KM  = 4.5    # min/km — green end of pace colour scale
-HR_MAX_DEFAULT    = 220     # bpm  — fallback when no HR data to set zone ceiling
+PACE_SLOW_MIN_KM    = 8.0    # min/km — red end of pace colour scale
+PACE_FAST_MIN_KM    = 4.5    # min/km — green end of pace colour scale
+HR_MAX_DEFAULT      = 220    # bpm  — fallback when no HR data to set zone ceiling
+MIN_MOVING_SPEED_MPS = 0.05  # m/s  — below this the activity is considered paused
 
 # Date range presets
 DATE_RANGES = [
