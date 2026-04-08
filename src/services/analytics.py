@@ -14,7 +14,14 @@ def compute_metrics(activity: Activity) -> Activity:
     Populate ActivityMetrics summary fields from cleaned sample data.
     Parser-supplied fields (hr_zones, vo2max, epoc, …) are preserved;
     only None fields are computed here.
+
+    Requires: activity.is_processed == True (core.processor.process() must run first).
     """
+    if not activity.is_processed:
+        raise RuntimeError(
+            f"compute_metrics() called on unprocessed activity '{activity.file_id}'. "
+            "Run core.processor.process() first."
+        )
     if not activity.samples:
         return activity
 

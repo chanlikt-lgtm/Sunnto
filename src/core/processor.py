@@ -53,6 +53,7 @@ def process(activity: Activity) -> Activity:
         s.cadence     = _safe(row.get("cadence"))
         s.temperature = _safe(row.get("temperature"))
 
+    activity.is_processed = True
     return activity
 
 

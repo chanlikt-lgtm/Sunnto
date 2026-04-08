@@ -23,6 +23,9 @@ class Activity:
     samples: List[Sample] = field(default_factory=list)
     metrics: Optional[ActivityMetrics] = None
 
+    # Set by core/processor.py after cleaning — checked by services/analytics.py
+    is_processed: bool = field(default=False, init=False, repr=False, compare=False)
+
     # ── Convenience properties ─────────────────────────────────────────────────
 
     @property
