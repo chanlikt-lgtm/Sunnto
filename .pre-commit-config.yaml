@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: import-linter
+        name: import-linter (dependency boundaries)
+        language: python
+        entry: python -c "from importlinter.cli import lint_imports; lint_imports()"
+        pass_filenames: false
+        additional_dependencies: [import-linter>=2.1]

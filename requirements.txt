@@ -5,3 +5,4 @@ pandas>=2.2
 folium>=0.17
 pyyaml>=6.0
 import-linter>=2.1
+pre-commit>=3.7
