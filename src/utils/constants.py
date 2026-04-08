@@ -69,12 +69,6 @@ PACE_SLOW_MIN_KM  = 8.0    # min/km — red end of pace colour scale
 PACE_FAST_MIN_KM  = 4.5    # min/km — green end of pace colour scale
 HR_MAX_DEFAULT    = 220     # bpm  — fallback when no HR data to set zone ceiling
 
-# Unit conversions
-RAD_TO_DEG = 57.29577951308232    # 180/pi
-HZ_TO_BPM  = 60.0                 # multiply HR samples
-HZ_TO_RPM  = 60.0                 # multiply cadence samples
-K_TO_C     = -273.15              # add to Kelvin
-
 # Date range presets
 DATE_RANGES = [
     ("7d",  "Last 7 days"),

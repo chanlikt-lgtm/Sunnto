@@ -5,8 +5,8 @@ from typing import Dict, Any, List
 
 from ..models.sample import Sample
 from ..models.metrics import ActivityMetrics, HrZones, Lap
-from ..utils.constants import RAD_TO_DEG, HZ_TO_BPM, HZ_TO_RPM, K_TO_C
-from ..utils.datetime_utils import parse_iso, speed_to_pace
+from ..utils.units import RAD_TO_DEG, HZ_TO_BPM, HZ_TO_RPM, K_TO_C, speed_to_pace
+from ..utils.datetime_utils import parse_iso
 
 
 def parse_suunto_json(data: Dict[str, Any], file_id: str):
