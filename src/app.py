@@ -77,7 +77,7 @@ def update_sport_badge(file_id):
     sport     = activity.sport
     category  = activity.sport_category
     icon      = SPORT_ICONS.get(sport, "person-running")
-    color     = CATEGORY_COLORS.get(category, "#aaa")
+    color     = CATEGORY_COLORS.get(category.value if category else "", "#aaa")
 
     return html.Div([
         html.Div([

@@ -8,6 +8,7 @@ from .components.stat_cards import (
     build_stat_cards, build_gym_stat_cards,
     build_sleep_stat_cards, build_swim_stat_cards,
 )
+from ..models.activity import SportCategory
 
 
 def build_layout(activity_options: list, sport_options: list) -> html.Div:
@@ -62,11 +63,11 @@ def build_main_content(activity, no_activity_msg: str = None,
                                className="text-muted py-5 text-center"))
 
     cat = activity.sport_category
-    if cat == "gym":
+    if cat == SportCategory.GYM:
         return _build_gym_content(activity, uirevision)
-    if cat == "sleep":
+    if cat == SportCategory.SLEEP:
         return _build_sleep_content(activity, uirevision)
-    if cat == "swimming":
+    if cat == SportCategory.SWIMMING:
         return _build_swimming_content(activity, uirevision)
     return _build_endurance_content(activity, uirevision)
 

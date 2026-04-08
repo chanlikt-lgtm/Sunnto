@@ -1,12 +1,20 @@
 """Activity domain model."""
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 import pandas as pd
 
 from .sample import Sample
 from .metrics import ActivityMetrics
 from ..utils.constants import ACTIVITY_TYPES
+
+
+class SportCategory(Enum):
+    ENDURANCE = "endurance"
+    GYM       = "gym"
+    SLEEP     = "sleep"
+    SWIMMING  = "swimming"
 
 
 @dataclass
@@ -27,8 +35,7 @@ class Activity:
     is_processed: bool = field(default=False, init=False, repr=False, compare=False)
 
     # Set by services/analytics.compute_metrics() — read by views
-    # Values: 'endurance', 'gym', 'sleep', 'swimming'  (None = not yet enriched)
-    sport_category: Optional[str] = field(default=None, init=False, repr=False, compare=False)
+    sport_category: Optional[SportCategory] = field(default=None, init=False, repr=False, compare=False)
 
     # ── Convenience properties ─────────────────────────────────────────────────
 
