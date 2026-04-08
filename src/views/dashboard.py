@@ -4,7 +4,10 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 from .components.sidebar import build_sidebar
-from .components.stat_cards import build_stat_cards
+from .components.stat_cards import (
+    build_stat_cards, build_gym_stat_cards,
+    build_sleep_stat_cards, build_swim_stat_cards,
+)
 
 
 def build_layout(activity_options: list, sport_options: list) -> html.Div:
@@ -34,30 +37,69 @@ def build_layout(activity_options: list, sport_options: list) -> html.Div:
 
 def build_main_content(activity, no_activity_msg: str = None,
                        uirevision: str = "activity"):
-    """
-    Build: stat cards -> summary chart -> map -> lap table.
-    uirevision changes on activity switch or Refresh → resets zoom.
-    """
+    """Route to sport-specific layout based on activity.sport_category."""
     if activity is None:
         return html.Div(html.P(no_activity_msg or "Select an activity from the sidebar.",
                                className="text-muted py-5 text-center"))
 
+    cat = activity.sport_category
+    if cat == "gym":
+        return _build_gym_content(activity, uirevision)
+    if cat == "sleep":
+        return _build_sleep_content(activity, uirevision)
+    if cat == "swimming":
+        return _build_swimming_content(activity, uirevision)
+    return _build_endurance_content(activity, uirevision)
+
+
+def _build_endurance_content(activity, uirevision):
     from .map_view import build_map_section
-
-    parts = [
-        build_stat_cards(activity),
-        html.H6("Performance Charts", className="text-secondary mb-2 mt-2"),
-        _chart_section(activity, uirevision),
-        build_map_section(activity),
+    return html.Div([
+        dbc.Row([
+            dbc.Col([
+                html.H6("Performance Charts", className="text-secondary mb-2 mt-2"),
+                _chart_section(activity, uirevision),
+            ], md=8),
+            dbc.Col([
+                build_map_section(activity),
+                build_stat_cards(activity),
+            ], md=4),
+        ], className="g-3"),
         _lap_section(activity),
-    ]
-    return html.Div(parts)
+    ])
 
 
-def _chart_section(activity, uirevision="activity"):
+def _build_gym_content(activity, uirevision):
+    return html.Div([
+        html.H6("Training Charts", className="text-secondary mb-2 mt-2"),
+        _chart_section(activity, uirevision, allowed_panels=["hr"]),
+        build_gym_stat_cards(activity),
+    ])
+
+
+def _build_sleep_content(activity, uirevision):
+    return html.Div([
+        html.H6("Sleep Overview", className="text-secondary mb-2 mt-2"),
+        _chart_section(activity, uirevision, allowed_panels=["hr"]),
+        build_sleep_stat_cards(activity),
+    ])
+
+
+def _build_swimming_content(activity, uirevision):
+    from .map_view import build_map_section
+    return html.Div([
+        html.H6("Swim Charts", className="text-secondary mb-2 mt-2"),
+        _chart_section(activity, uirevision),
+        build_swim_stat_cards(activity),
+        _lap_section(activity),
+    ])
+
+
+def _chart_section(activity, uirevision="activity", allowed_panels=None):
     from .charts import build_summary_chart, build_hr_zones_bar
 
-    fig = build_summary_chart(activity, uirevision=uirevision)
+    fig = build_summary_chart(activity, uirevision=uirevision,
+                              allowed_panels=allowed_panels)
     zones_fig = build_hr_zones_bar(activity, uirevision=uirevision)
 
     if fig is None:

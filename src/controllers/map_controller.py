@@ -89,7 +89,7 @@ def build_plotly_map(activity: Activity):
             zoom=13,
         ),
         margin=dict(l=0, r=0, t=0, b=0),
-        height=400,
+        height=460,
         showlegend=False,
         paper_bgcolor="#12122a",
         uirevision="map-static",   # keep user zoom/pan between cursor updates

@@ -21,6 +21,50 @@ def build_stat_cards(activity: Activity):
         ("Recovery",   _fmt(m.recovery_h, "h"),              "light"),
     ]
 
+    return _cards_row(cards_data)
+
+
+def build_gym_stat_cards(activity: Activity):
+    """Stat cards for gym / indoor training / yoga / crossfit sessions."""
+    m = activity.metrics
+    cards_data = [
+        ("Duration",  format_duration(activity.duration_s), "info"),
+        ("Avg HR",    _fmt(m.avg_hr, "bpm"),                "danger"),
+        ("Calories",  _fmt(m.calories, "kcal"),             "secondary"),
+        ("EPOC",      _fmt(m.epoc),                         "warning"),
+        ("Recovery",  _fmt(m.recovery_h, "h"),              "light"),
+        ("Peak TE",   _fmt(m.peak_training_effect),         "primary"),
+    ]
+    return _cards_row(cards_data)
+
+
+def build_sleep_stat_cards(activity: Activity):
+    """Stat cards for sleep / meditation / rest sessions."""
+    m = activity.metrics
+    cards_data = [
+        ("Duration", format_duration(activity.duration_s), "info"),
+        ("Avg HR",   _fmt(m.avg_hr, "bpm"),                "danger"),
+        ("Recovery", _fmt(m.recovery_h, "h"),              "light"),
+        ("EPOC",     _fmt(m.epoc),                         "secondary"),
+    ]
+    return _cards_row(cards_data)
+
+
+def build_swim_stat_cards(activity: Activity):
+    """Stat cards for pool / open-water swimming sessions."""
+    m = activity.metrics
+    cards_data = [
+        ("Distance",  f"{activity.distance_km} km",         "primary"),
+        ("Time",      format_duration(activity.duration_s), "info"),
+        ("Avg HR",    _fmt(m.avg_hr, "bpm"),                "danger"),
+        ("Avg Pace",  format_pace(m.avg_pace) + " /km",     "success"),
+        ("Calories",  _fmt(m.calories, "kcal"),             "secondary"),
+        ("Recovery",  _fmt(m.recovery_h, "h"),              "light"),
+    ]
+    return _cards_row(cards_data)
+
+
+def _cards_row(cards_data):
     cols = []
     for label, value, color in cards_data:
         cols.append(dbc.Col(
@@ -33,7 +77,6 @@ def build_stat_cards(activity: Activity):
             ], color=color, outline=True, className="h-100"),
             xs=6, sm=4, md=3, lg=2
         ))
-
     return dbc.Row(cols, className="g-2 mb-3")
 
 

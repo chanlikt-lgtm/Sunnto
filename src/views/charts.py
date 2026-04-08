@@ -30,7 +30,8 @@ _PANEL_META = {
 
 
 def build_summary_chart(activity: Activity,
-                        uirevision: str = "activity") -> Optional[go.Figure]:
+                        uirevision: str = "activity",
+                        allowed_panels: list = None) -> Optional[go.Figure]:
     """
     Stacked subplot: HR (with zone bands) / Pace / Altitude.
     - hovermode='x unified'  → single tooltip showing all values
@@ -43,6 +44,8 @@ def build_summary_chart(activity: Activity,
 
     panels = []
     for col in ["hr", "pace", "altitude"]:
+        if allowed_panels and col not in allowed_panels:
+            continue
         if col in df.columns and df[col].notna().sum() > 5:
             title, unit = _PANEL_META[col]
             color = CHART_COLORS[col if col != "altitude" else "alt"]
@@ -80,6 +83,24 @@ def build_summary_chart(activity: Activity,
 
         if col == "pace":
             fig.update_yaxes(autorange="reversed", row=r, col=1)
+
+    # ── Explicit axis ranges — adapt to each file's actual data ─────────────
+    x_max = df["min"].max()
+    fig.update_xaxes(range=[0, x_max * 1.02])   # 2 % right-padding
+
+    for r, (col, _, _, _) in enumerate(panels, start=1):
+        series = df[col].dropna()
+        if series.empty:
+            continue
+        y_lo, y_hi = series.min(), series.max()
+        pad = (y_hi - y_lo) * 0.10 or 1.0   # at least 1 unit of padding
+        if col == "pace":
+            # reversed axis: higher value (slower) at bottom
+            fig.update_yaxes(range=[y_hi + pad, max(0, y_lo - pad)], row=r, col=1)
+        elif col == "hr":
+            fig.update_yaxes(range=[max(0, y_lo - pad), y_hi + pad], row=r, col=1)
+        else:
+            fig.update_yaxes(range=[y_lo - pad, y_hi + pad], row=r, col=1)
 
     # ── Layout ────────────────────────────────────────────────────────────────
     fig.update_layout(
@@ -158,6 +179,7 @@ def build_hr_zones_bar(activity: Activity,
         customdata=labels,
         hovertemplate="%{y}: <b>%{x:.1f} min</b>  (%{customdata})<extra></extra>",
     ))
+    x_max = max(t for t in times if t > 0) if any(t > 0 for t in times) else 1
     fig.update_layout(
         template="plotly_dark",
         paper_bgcolor="#12122a",
@@ -165,7 +187,7 @@ def build_hr_zones_bar(activity: Activity,
         height=180,
         title=dict(text="Time in HR Zones", font=dict(size=13)),
         showlegend=False,
-        xaxis_title="minutes",
+        xaxis=dict(title="minutes", range=[0, x_max * 1.15]),
         margin=dict(l=40, r=70, t=35, b=30),
         uirevision=uirevision,
     )
