@@ -142,7 +142,7 @@ def _chart_section(activity, uirevision="activity", allowed_panels=None):
 
 
 def _lap_section(activity):
-    from ..services.transforms import lap_table
+    from ..services.view_transforms import lap_table
     from dash import dash_table
 
     rows = lap_table(activity)

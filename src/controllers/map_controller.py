@@ -4,7 +4,7 @@ import colorsys
 import plotly.graph_objects as go
 import folium
 from ..models.activity import Activity
-from ..services.transforms import gps_track
+from ..services.view_transforms import gps_track
 from ..utils.constants import PACE_SLOW_MIN_KM, PACE_FAST_MIN_KM
 
 # Trace indices in the Plotly map figure (must match build_plotly_map order)

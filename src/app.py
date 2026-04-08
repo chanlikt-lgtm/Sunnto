@@ -144,7 +144,7 @@ def on_chart_hover(hover_data, file_id):
     if not activity:
         return chart_patch, no_update, no_update
 
-    from .services.transforms import find_sample_at_time, find_distance_at_time
+    from .services.view_transforms import find_sample_at_time, find_distance_at_time
     from .controllers.map_controller import CURSOR_TRACE
 
     # ── 2. GPS cursor ─────────────────────────────────────────────────────────
