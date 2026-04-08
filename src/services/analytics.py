@@ -54,6 +54,11 @@ def compute_metrics(activity: Activity) -> Activity:
             m.avg_temp = round(float(df["temperature"].mean()), 1)
 
     # ── Sport category — set once here, read by views ─────────────────────────
+    if activity.sport_category is not None:
+        raise RuntimeError(
+            f"sport_category already set on '{activity.file_id}'. "
+            "compute_metrics() must be called exactly once."
+        )
     activity.sport_category = classify_sport(activity)
 
     # ── ADD NEW METRICS BELOW ──────────────────────────────────────────────────
