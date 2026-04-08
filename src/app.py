@@ -4,7 +4,7 @@ import threading
 import webbrowser
 
 import dash
-from dash import Input, Output, State, callback_context, Patch, no_update
+from dash import Input, Output, State, callback_context
 import dash_bootstrap_components as dbc
 
 from .controllers.dashboard_controller import DashboardController
@@ -127,57 +127,89 @@ def update_sport_badge(store_data):
 
 
 @app.callback(
-    Output("summary-chart",   "figure"),   # Patch: crosshair
-    Output("map-graph",       "figure"),   # Patch: GPS cursor
-    Output("cursor-distance", "children"), # live distance box
+    Output("hover-data-store", "data"),
+    Input("selected-activity-store", "data"),
+    prevent_initial_call=False,
+)
+def precompute_hover_data(store_data):
+    """
+    Runs once per activity selection (not per hover).
+    Stores a lean per-sample array for the clientside hover callback.
+    """
+    file_id  = (store_data or {}).get("file_id")
+    activity = ctrl.get_activity(file_id) if file_id else None
+    if not activity:
+        return None
+    return {
+        "samples": [
+            {
+                "lat":     s.lat,
+                "lon":     s.lon,
+                "dist_km": round(s.distance / 1000.0, 3) if s.distance is not None else 0.0,
+            }
+            for s in activity.samples
+        ],
+        "cursor_trace_idx": CURSOR_TRACE,
+    }
+
+
+# ── Clientside hover callback — runs entirely in the browser (<20 ms) ──────────
+app.clientside_callback(
+    """
+    function(hoverData, chartFig, mapFig, hoverStore) {
+        var no_update = window.dash_clientside.no_update;
+
+        if (!hoverData || !hoverStore || !chartFig) {
+            return [no_update, no_update, no_update];
+        }
+        var pt = hoverData.points && hoverData.points[0];
+        if (!pt) return [no_update, no_update, no_update];
+
+        var timeMin = pt.x;
+        var ptIdx   = pt.pointIndex;
+
+        // ── 1. Crosshair — shallow-copy shapes array so Plotly diffs it ──────
+        var shapes = chartFig.layout.shapes.slice();
+        var last   = shapes.length - 1;
+        shapes[last] = Object.assign({}, shapes[last], {
+            x0: timeMin, x1: timeMin,
+            line: {color: 'rgba(200,200,255,0.75)', width: 1.5}
+        });
+        var chartOut = Object.assign({}, chartFig, {
+            layout: Object.assign({}, chartFig.layout, {shapes: shapes})
+        });
+
+        // ── 2 & 3. GPS cursor + distance ──────────────────────────────────────
+        var mapOut   = no_update;
+        var distText = '0.00 km';
+
+        if (ptIdx !== undefined && ptIdx !== null) {
+            var s = hoverStore.samples[ptIdx];
+            if (s) {
+                if (s.lat !== null && s.lat !== undefined && mapFig) {
+                    var data = mapFig.data.slice();
+                    var ci   = hoverStore.cursor_trace_idx;
+                    data[ci] = Object.assign({}, data[ci], {lat: [s.lat], lon: [s.lon]});
+                    mapOut = Object.assign({}, mapFig, {data: data});
+                }
+                if (s.dist_km > 0) {
+                    distText = s.dist_km.toFixed(2) + ' km';
+                }
+            }
+        }
+
+        return [chartOut, mapOut, distText];
+    }
+    """,
+    Output("summary-chart",   "figure"),
+    Output("map-graph",       "figure"),
+    Output("cursor-distance", "children"),
     Input("summary-chart",    "hoverData"),
-    State("selected-activity-store", "data"),
+    State("summary-chart",    "figure"),
+    State("map-graph",        "figure"),
+    State("hover-data-store", "data"),
     prevent_initial_call=True,
 )
-def on_chart_hover(hover_data, store_data):
-    """
-    Fired on every chart hover:
-      1. Moves the full-height crosshair across all subplot panels.
-      2. Moves the red GPS cursor on the map.
-      3. Updates the distance box in the header.
-    """
-    if not hover_data or not store_data:
-        return no_update, no_update, no_update
-
-    try:
-        point    = hover_data["points"][0]
-        time_min = point["x"]
-        pt_idx   = point.get("pointIndex")
-    except (KeyError, IndexError):
-        return no_update, no_update, no_update
-
-    # ── 1. Crosshair ──────────────────────────────────────────────────────────
-    chart_patch = Patch()
-    chart_patch["layout"]["shapes"][-1]["x0"] = time_min
-    chart_patch["layout"]["shapes"][-1]["x1"] = time_min
-    chart_patch["layout"]["shapes"][-1]["line"]["color"] = "rgba(200,200,255,0.75)"
-    chart_patch["layout"]["shapes"][-1]["line"]["width"] = 1.5
-
-    file_id  = store_data.get("file_id")
-    activity = ctrl.get_activity(file_id) if file_id else None
-    if not activity or pt_idx is None:
-        return chart_patch, no_update, no_update
-
-    # O(1) direct index — pointIndex matches activity.samples row order
-    sample = activity.samples[pt_idx]
-
-    # ── 2. GPS cursor ─────────────────────────────────────────────────────────
-    map_patch = no_update
-    if sample.lat is not None:
-        map_patch = Patch()
-        map_patch["data"][CURSOR_TRACE]["lat"] = [sample.lat]
-        map_patch["data"][CURSOR_TRACE]["lon"] = [sample.lon]
-
-    # ── 3. Distance box ───────────────────────────────────────────────────────
-    dist_km   = sample.distance / 1000.0 if sample.distance is not None else 0.0
-    dist_text = f"{dist_km:.2f} km" if dist_km > 0 else "0.00 km"
-
-    return chart_patch, map_patch, dist_text
 
 
 # ── Run ────────────────────────────────────────────────────────────────────────

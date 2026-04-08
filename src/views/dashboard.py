@@ -51,6 +51,7 @@ def build_layout(activity_options: list, sport_options: list) -> html.Div:
             # Stores
             dcc.Store(id="reload-store"),
             dcc.Store(id="selected-activity-store"),
+            dcc.Store(id="hover-data-store"),
         ], style={"marginLeft": "240px", "minHeight": "100vh",
                   "background": "#0d0d1a"}),
     ], style={"fontFamily": "Inter, sans-serif"})
