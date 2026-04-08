@@ -92,18 +92,22 @@ def _build_endurance_content(activity, uirevision):
 
 
 def _build_gym_content(activity, uirevision):
+    from .map_view import _HIDDEN_MAP
     return html.Div([
         html.H6("Training Charts", className="text-secondary mb-2 mt-2"),
         _chart_section(activity, uirevision, allowed_panels=["hr"]),
         build_gym_stat_cards(activity),
+        _HIDDEN_MAP,
     ])
 
 
 def _build_sleep_content(activity, uirevision):
+    from .map_view import _HIDDEN_MAP
     return html.Div([
         html.H6("Sleep Overview", className="text-secondary mb-2 mt-2"),
         _chart_section(activity, uirevision, allowed_panels=["hr"]),
         build_sleep_stat_cards(activity),
+        _HIDDEN_MAP,
     ])
 
 
@@ -114,6 +118,7 @@ def _build_swimming_content(activity, uirevision):
         _chart_section(activity, uirevision),
         build_swim_stat_cards(activity),
         _lap_section(activity),
+        build_map_section(activity),   # hidden if no GPS (pool), visible for open water
     ])
 
 

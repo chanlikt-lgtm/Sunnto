@@ -5,21 +5,24 @@ from ..controllers.map_controller import build_plotly_map
 from ..models.activity import Activity
 
 
+_HIDDEN_MAP = dcc.Graph(id="map-graph", figure={}, style={"display": "none"})
+
+
 def build_map_section(activity: Activity) -> html.Div:
     if not activity.has_gps():
-        return html.Div(
+        return html.Div([
             html.P("No GPS data for this activity.",
                    className="text-muted text-center py-4"),
-            className="border rounded p-3 mb-3",
-            style={"background": "#1a1a2e"},
-        )
+            _HIDDEN_MAP,
+        ], className="border rounded p-3 mb-3", style={"background": "#1a1a2e"})
 
     fig = build_plotly_map(activity)
     if fig is None:
-        return html.Div(
+        return html.Div([
             html.P("GPS track too short to display.",
                    className="text-muted text-center py-4"),
-        )
+            _HIDDEN_MAP,
+        ])
 
     return html.Div([
         html.H6("GPS Track", className="text-secondary mb-2"),
