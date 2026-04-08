@@ -86,7 +86,7 @@ def update_sport_badge(file_id):
                                     "fontSize": "0.9rem"}),
         ], className="mb-1"),
         html.Span(
-            category.capitalize(),
+            category.value.capitalize(),
             style={
                 "backgroundColor": color + "33",   # 20 % alpha
                 "color": color,
