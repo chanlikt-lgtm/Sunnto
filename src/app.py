@@ -8,6 +8,7 @@ from dash import Input, Output, State, callback_context, Patch, no_update
 import dash_bootstrap_components as dbc
 
 from .controllers.dashboard_controller import DashboardController
+from .controllers.map_controller import CURSOR_TRACE
 from .views.dashboard import build_layout, build_main_content
 from .utils.constants import SPORT_ICONS, CATEGORY_COLORS
 
@@ -144,7 +145,9 @@ def on_chart_hover(hover_data, store_data):
         return no_update, no_update, no_update
 
     try:
-        time_min = hover_data["points"][0]["x"]
+        point    = hover_data["points"][0]
+        time_min = point["x"]
+        pt_idx   = point.get("pointIndex")
     except (KeyError, IndexError):
         return no_update, no_update, no_update
 
@@ -157,23 +160,21 @@ def on_chart_hover(hover_data, store_data):
 
     file_id  = store_data.get("file_id")
     activity = ctrl.get_activity(file_id) if file_id else None
-    if not activity:
+    if not activity or pt_idx is None:
         return chart_patch, no_update, no_update
 
-    from .services.view_transforms import find_sample_at_time, find_distance_at_time
-    from .controllers.map_controller import CURSOR_TRACE
+    # O(1) direct index — pointIndex matches activity.samples row order
+    sample = activity.samples[pt_idx]
 
     # ── 2. GPS cursor ─────────────────────────────────────────────────────────
     map_patch = no_update
-    if activity.has_gps():
-        sample = find_sample_at_time(activity, time_min)
-        if sample and sample.lat is not None:
-            map_patch = Patch()
-            map_patch["data"][CURSOR_TRACE]["lat"] = [sample.lat]
-            map_patch["data"][CURSOR_TRACE]["lon"] = [sample.lon]
+    if sample.lat is not None:
+        map_patch = Patch()
+        map_patch["data"][CURSOR_TRACE]["lat"] = [sample.lat]
+        map_patch["data"][CURSOR_TRACE]["lon"] = [sample.lon]
 
     # ── 3. Distance box ───────────────────────────────────────────────────────
-    dist_km   = find_distance_at_time(activity, time_min)
+    dist_km   = sample.distance / 1000.0 if sample.distance is not None else 0.0
     dist_text = f"{dist_km:.2f} km" if dist_km > 0 else "0.00 km"
 
     return chart_patch, map_patch, dist_text
