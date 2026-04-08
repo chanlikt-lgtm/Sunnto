@@ -10,15 +10,17 @@ def build_stat_cards(activity: Activity):
     """Return a dbc.Row of metric cards for the selected activity."""
     m = activity.metrics
 
+    temp_str = f"{m.avg_temp:.1f} °C" if m.avg_temp is not None else "--"
     cards_data = [
         ("Distance",   f"{activity.distance_km} km",        "primary"),
         ("Time",       format_duration(activity.duration_s), "info"),
         ("Avg HR",     _fmt(m.avg_hr, "bpm"),               "danger"),
         ("Avg Pace",   format_pace(m.avg_pace) + " /km",    "success"),
-        ("Ascent",     f"{activity.ascent_m:.0f} m",         "warning"),
-        ("Calories",   _fmt(m.calories, "kcal"),             "secondary"),
-        ("VO2max",     _fmt(m.vo2max),                       "light"),
-        ("Recovery",   _fmt(m.recovery_h, "h"),              "light"),
+        ("Ascent",     f"{activity.ascent_m:.0f} m",        "warning"),
+        ("Calories",   _fmt(m.calories, "kcal"),            "secondary"),
+        ("VO2max",     _fmt(m.vo2max),                      "light"),
+        ("Recovery",   _fmt(m.recovery_h, "h"),             "light"),
+        ("Temp",       temp_str,                            "info"),
     ]
 
     return _cards_row(cards_data)
@@ -27,6 +29,7 @@ def build_stat_cards(activity: Activity):
 def build_gym_stat_cards(activity: Activity):
     """Stat cards for gym / indoor training / yoga / crossfit sessions."""
     m = activity.metrics
+    temp_str = f"{m.avg_temp:.1f} °C" if m.avg_temp is not None else "--"
     cards_data = [
         ("Duration",  format_duration(activity.duration_s), "info"),
         ("Avg HR",    _fmt(m.avg_hr, "bpm"),                "danger"),
@@ -34,6 +37,7 @@ def build_gym_stat_cards(activity: Activity):
         ("EPOC",      _fmt(m.epoc),                         "warning"),
         ("Recovery",  _fmt(m.recovery_h, "h"),              "light"),
         ("Peak TE",   _fmt(m.peak_training_effect),         "primary"),
+        ("Temp",      temp_str,                             "info"),
     ]
     return _cards_row(cards_data)
 

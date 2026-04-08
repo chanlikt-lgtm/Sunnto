@@ -27,7 +27,15 @@ class Activity:
 
     @property
     def sport(self) -> str:
-        return ACTIVITY_TYPES.get(self.activity_type_id, f"Sport {self.activity_type_id}")
+        base = ACTIVITY_TYPES.get(self.activity_type_id, f"Sport {self.activity_type_id}")
+        # Refine Walking ↔ Running → Jogging by pace (requires metrics to be set)
+        if self.metrics and self.metrics.avg_pace:
+            pace = self.metrics.avg_pace
+            if base == "Walking" and pace < 7.0:    # faster than 7 min/km → jogging
+                return "Jogging"
+            if base == "Running" and pace >= 7.0:   # slower than 7 min/km → jogging
+                return "Jogging"
+        return base
 
     @property
     def sport_category(self) -> str:

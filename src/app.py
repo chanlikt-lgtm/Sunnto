@@ -9,6 +9,7 @@ import dash_bootstrap_components as dbc
 
 from .controllers.dashboard_controller import DashboardController
 from .views.dashboard import build_layout, build_main_content
+from .utils.constants import SPORT_ICONS, CATEGORY_COLORS
 
 # ── Initialise ─────────────────────────────────────────────────────────────────
 
@@ -60,6 +61,44 @@ def update_main(file_id, reload_clicks, refresh_clicks, _reload_store):
     title   = f"{activity.sport}  |  {activity.date_str}  |  {activity.distance_km} km"
     content = build_main_content(activity, uirevision=uirevision)
     return title, content, options
+
+
+@app.callback(
+    Output("sport-badge", "children"),
+    Input("activity-dropdown", "value"),
+    prevent_initial_call=False,
+)
+def update_sport_badge(file_id):
+    from dash import html
+    activity = ctrl.get_activity(file_id) if file_id else ctrl.get_latest()
+    if activity is None:
+        return html.Span("—", className="text-muted small")
+
+    sport     = activity.sport
+    category  = activity.sport_category
+    icon      = SPORT_ICONS.get(sport, "person-running")
+    color     = CATEGORY_COLORS.get(category, "#aaa")
+
+    return html.Div([
+        html.Div([
+            html.I(className=f"fa-solid fa-{icon} me-2", style={"color": color}),
+            html.Span(sport, style={"color": "#fff", "fontWeight": "600",
+                                    "fontSize": "0.9rem"}),
+        ], className="mb-1"),
+        html.Span(
+            category.capitalize(),
+            style={
+                "backgroundColor": color + "33",   # 20 % alpha
+                "color": color,
+                "border": f"1px solid {color}55",
+                "borderRadius": "4px",
+                "padding": "1px 8px",
+                "fontSize": "0.72rem",
+                "textTransform": "uppercase",
+                "letterSpacing": "0.05em",
+            },
+        ),
+    ])
 
 
 @app.callback(

@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc
 
 
-def build_sidebar(activity_options: list, sport_options: list) -> html.Div:
+def build_sidebar(activity_options: list, sport_options: list = None) -> html.Div:
     return html.Div([
         html.H5("Fitness Dashboard", className="fw-bold mb-4 text-primary"),
 
@@ -36,13 +36,7 @@ def build_sidebar(activity_options: list, sport_options: list) -> html.Div:
         html.Hr(),
 
         html.Label("Sport Type", className="fw-semibold small"),
-        dcc.Checklist(
-            id="sport-checklist",
-            options=sport_options,
-            value=[],
-            className="mb-3 small",
-            inputClassName="me-1",
-        ),
+        html.Div(id="sport-badge", className="mb-3"),
 
         html.Hr(),
 

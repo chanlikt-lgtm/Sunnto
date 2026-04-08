@@ -30,17 +30,38 @@ ACTIVITY_TYPES = {
 }
 
 SPORT_ICONS = {
-    "Running":        "man-running",
-    "Trail Running":  "person-hiking",
-    "Walking":        "person-walking",
-    "Hiking":         "person-hiking",
-    "Cycling":        "person-biking",
-    "MTB":            "person-biking",
-    "Indoor Cycling": "person-biking",
-    "Open Water Swim":"person-swimming",
-    "Pool Swimming":  "person-swimming",
-    "Gym":            "dumbbell",
-    "Sleep":          "moon",
+    "Running":          "man-running",
+    "Jogging":          "person-running",
+    "Trail Running":    "person-hiking",
+    "Walking":          "person-walking",
+    "Hiking":           "person-hiking",
+    "Cycling":          "person-biking",
+    "MTB":              "person-biking",
+    "Indoor Cycling":   "person-biking",
+    "Rowing":           "water",
+    "Paddling":         "water",
+    "Nordic Ski":       "person-skiing-nordic",
+    "Ski Touring":      "person-skiing",
+    "Open Water Swim":  "person-swimming",
+    "Pool Swimming":    "person-swimming",
+    "Indoor Training":  "dumbbell",
+    "Treadmill":        "man-running",
+    "Triathlon":        "person-biking",
+    "Gym":              "dumbbell",
+    "Yoga":             "spa",
+    "Fitness Class":    "heart-pulse",
+    "Bouldering":       "mountain",
+    "Crossfit":         "dumbbell",
+    "Sleep":            "moon",
+    "Meditation":       "brain",
+}
+
+# Colour per GUI category
+CATEGORY_COLORS = {
+    "endurance": "#3fb950",   # green
+    "gym":       "#f0a050",   # amber
+    "swimming":  "#58a6ff",   # blue
+    "sleep":     "#c084fc",   # purple
 }
 
 # Unit conversions
