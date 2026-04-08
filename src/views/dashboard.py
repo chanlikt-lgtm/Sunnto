@@ -32,45 +32,31 @@ def build_layout(activity_options: list, sport_options: list) -> html.Div:
     ], style={"fontFamily": "Inter, sans-serif"})
 
 
-def build_main_content(activity, no_activity_msg: str = None):
+def build_main_content(activity, no_activity_msg: str = None,
+                       uirevision: str = "activity"):
     """
     Build: stat cards -> summary chart -> map -> lap table.
-    Called from callbacks.
+    uirevision changes on activity switch or Refresh → resets zoom.
     """
     if activity is None:
         return html.Div(html.P(no_activity_msg or "Select an activity from the sidebar.",
                                className="text-muted py-5 text-center"))
 
-    from .components.stat_cards import build_stat_cards
-    from .charts import build_summary_chart
-    from .map_view import build_map_section
-    from ..services.transforms import lap_table
-    from dash import dash_table
-
     parts = [
-        # 1) Stat cards
         build_stat_cards(activity),
-
-        # 2) Charts
         html.H6("Performance Charts", className="text-secondary mb-2 mt-2"),
-        _chart_section(activity),
-
-        # 3) Map
+        _chart_section(activity, uirevision),
         build_map_section(activity),
-
-        # 4) Lap table
         _lap_section(activity),
     ]
-
     return html.Div(parts)
 
 
-def _chart_section(activity):
+def _chart_section(activity, uirevision="activity"):
     from .charts import build_summary_chart, build_hr_zones_bar
-    import dash_bootstrap_components as dbc
 
-    fig = build_summary_chart(activity)
-    zones_fig = build_hr_zones_bar(activity)
+    fig = build_summary_chart(activity, uirevision=uirevision)
+    zones_fig = build_hr_zones_bar(activity, uirevision=uirevision)
 
     if fig is None:
         return html.P("No chart data available.", className="text-muted")

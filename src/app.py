@@ -30,29 +30,34 @@ app.layout = build_layout(
 # ── Callbacks ──────────────────────────────────────────────────────────────────
 
 @app.callback(
-    Output("activity-title", "children"),
-    Output("main-content",   "children"),
+    Output("activity-title",    "children"),
+    Output("main-content",      "children"),
     Output("activity-dropdown", "options"),
-    Input("activity-dropdown", "value"),
-    Input("reload-btn",         "n_clicks"),
+    Input("activity-dropdown",  "value"),
+    Input("reload-btn",         "n_clicks"),   # sidebar Reload Data
+    Input("refresh-btn",        "n_clicks"),   # header Refresh (resets zoom)
     Input("reload-store",       "data"),
     prevent_initial_call=False,
 )
-def update_main(file_id, _reload_btn, _reload_store):
+def update_main(file_id, reload_clicks, refresh_clicks, _reload_store):
     triggered = [t["prop_id"] for t in callback_context.triggered]
 
     if any("reload" in t for t in triggered):
         ctrl.reload()
 
     activity = ctrl.get_activity(file_id) if file_id else ctrl.get_latest()
-
-    options = ctrl.get_activity_options()
+    options  = ctrl.get_activity_options()
 
     if activity is None:
         return "No activity", build_main_content(None), options
 
-    title = f"{activity.sport}  |  {activity.date_str}  |  {activity.distance_km} km"
-    content = build_main_content(activity)
+    # uirevision changes whenever activity switches OR Refresh is clicked
+    # → Plotly resets zoom/pan to default on every such event
+    total_clicks = (reload_clicks or 0) + (refresh_clicks or 0)
+    uirevision   = f"{activity.file_id}_{total_clicks}"
+
+    title   = f"{activity.sport}  |  {activity.date_str}  |  {activity.distance_km} km"
+    content = build_main_content(activity, uirevision=uirevision)
     return title, content, options
 
 

@@ -69,14 +69,16 @@ def build_plotly_map(activity: Activity):
         name="Start",
     ))
 
-    # ── Cursor marker (moved by callback) ─────────────────────────────────────
+    # ── Cursor marker (moved by hover callback) ───────────────────────────────
     fig.add_trace(go.Scattermapbox(
         lat=[lats[0]], lon=[lons[0]],
         mode="markers",
-        marker=dict(size=16, color="#ffffff",
-                    symbol="circle",
-                    opacity=0.9),
-        hovertemplate="<b>Position</b><extra></extra>",
+        marker=dict(
+            size=18,
+            color="#ff3333",        # bright red
+            opacity=1.0,
+        ),
+        hovertemplate="<b>Current Position</b><extra></extra>",
         name="Cursor",
     ))
 

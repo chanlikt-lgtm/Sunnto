@@ -11,9 +11,8 @@ from ..utils.constants import CHART_COLORS
 from ..utils.datetime_utils import format_pace
 
 
-_HEIGHT = 210   # px per subplot row
+_HEIGHT = 220   # px per subplot row
 
-# Zone colours (semi-transparent fill bands)
 _ZONE_COLORS = [
     "#3fb950",   # Z1 green
     "#8bc34a",   # Z2 yellow-green
@@ -22,23 +21,31 @@ _ZONE_COLORS = [
     "#c084fc",   # Z5 purple
 ]
 
+# Human-readable names shown in the unified hover tooltip
+_PANEL_META = {
+    "hr":       ("Heart Rate", "bpm"),
+    "pace":     ("Pace",       "min/km"),
+    "altitude": ("Altitude",   "m"),
+}
 
-def build_summary_chart(activity: Activity) -> Optional[go.Figure]:
+
+def build_summary_chart(activity: Activity,
+                        uirevision: str = "activity") -> Optional[go.Figure]:
     """
     Stacked subplot: HR (with zone bands) / Pace / Altitude.
-    All subplots share the x-axis so zoom syncs across all panels.
+    - hovermode='x unified'  → single tooltip showing all values
+    - Spike line drawn across every panel with the cursor
+    - Lap boundaries as dashed vertical lines
     """
     df = chart_dataframe(activity)
     if df.empty:
         return None
 
     panels = []
-    for col, title, unit, color in [
-        ("hr",       "Heart Rate (bpm)",  "bpm",    CHART_COLORS["hr"]),
-        ("pace",     "Pace (min/km)",     "min/km", CHART_COLORS["pace"]),
-        ("altitude", "Altitude (m)",      "m",      CHART_COLORS["alt"]),
-    ]:
+    for col in ["hr", "pace", "altitude"]:
         if col in df.columns and df[col].notna().sum() > 5:
+            title, unit = _PANEL_META[col]
+            color = CHART_COLORS[col if col != "altitude" else "alt"]
             panels.append((col, title, unit, color))
 
     if not panels:
@@ -49,104 +56,113 @@ def build_summary_chart(activity: Activity) -> Optional[go.Figure]:
         rows=rows, cols=1,
         shared_xaxes=True,
         subplot_titles=[p[1] for p in panels],
-        vertical_spacing=0.07,
+        vertical_spacing=0.08,
     )
 
     for r, (col, title, unit, color) in enumerate(panels, start=1):
         y = df[col]
 
-        # Gradient fill: add a filled area trace per zone for HR
         if col == "hr":
             _add_hr_zone_bands(fig, df, activity, r)
 
         fig.add_trace(go.Scatter(
-            x=df["min"], y=y,
+            x=df["min"],
+            y=y,
             mode="lines",
             line=dict(color=color, width=2),
             fill="tozeroy" if col != "hr" else None,
             fillcolor=_alpha(color, 0.10) if col != "hr" else None,
-            name=col,
-            hovertemplate=f"%{{y:.1f}} {unit}<extra></extra>",
+            # ── Hover label shown in unified tooltip ─────────────────────────
+            name=title,
+            # No <extra></extra> so trace name IS shown in unified mode
+            hovertemplate=f"<b>%{{y:.1f}}</b> {unit}",
         ), row=r, col=1)
 
         if col == "pace":
             fig.update_yaxes(autorange="reversed", row=r, col=1)
 
+    # ── Layout ────────────────────────────────────────────────────────────────
     fig.update_layout(
         template="plotly_dark",
         paper_bgcolor="#12122a",
         plot_bgcolor="#12122a",
         height=rows * _HEIGHT,
         showlegend=False,
-        margin=dict(l=60, r=20, t=35, b=45),
-        uirevision="activity",
-        # ── Unified crosshair hover ──────────────────────────────────────────
+        margin=dict(l=65, r=20, t=35, b=45),
+        uirevision=uirevision,
+        # Single tooltip box showing all values at cursor x
         hovermode="x unified",
         hoverlabel=dict(
-            bgcolor="#1e1e3a",
-            bordercolor="#333",
-            font=dict(size=12, color="#eee"),
+            bgcolor="rgba(15,15,40,0.95)",
+            bordercolor="#555",
+            font=dict(size=13, color="#ffffff"),
+            namelength=-1,          # show full trace name
         ),
     )
+
+    # ── Spike / crosshair — applied globally to ALL subplot x-axes ────────────
+    # Calling update_xaxes without row/col applies to every subplot at once.
     fig.update_xaxes(
-        title_text="Time (min)", row=rows, col=1,
-        # Spike line (vertical crosshair across all panels)
+        showgrid=True,
+        gridcolor="#1e1e3a",
+        # Vertical spike line follows cursor across all panels
         showspikes=True,
-        spikecolor="#666",
-        spikethickness=1,
-        spikedash="dot",
-        spikemode="across+toaxis",
+        spikecolor="#cccccc",       # bright enough to see
+        spikethickness=1.5,
+        spikedash="solid",          # solid line, not dotted
+        spikemode="across+toaxis",  # crosses full height + shows on axis
         spikesnap="cursor",
     )
-    for r in range(1, rows + 1):
-        fig.update_xaxes(showgrid=True, gridcolor="#1e1e3a",
-                         showspikes=True, spikecolor="#666",
-                         spikethickness=1, spikedash="dot",
-                         spikemode="across", row=r, col=1)
-        fig.update_yaxes(showgrid=True, gridcolor="#1e1e3a",
-                         showspikes=True, spikecolor="#444",
-                         spikethickness=1, spikedash="dot",
-                         row=r, col=1)
+    fig.update_yaxes(
+        showgrid=True,
+        gridcolor="#1e1e3a",
+        # Horizontal spike on y (shows value marker on the y-axis)
+        showspikes=True,
+        spikecolor="#666666",
+        spikethickness=1,
+        spikedash="dot",
+    )
+    # Title on bottom x-axis only
+    fig.update_xaxes(title_text="Time (min)", row=rows, col=1)
 
-    # ── Lap boundary markers ─────────────────────────────────────────────────
-    lap_times = lap_cumulative_minutes(activity)
-    for i, t_min in enumerate(lap_times):
+    # ── Lap boundary lines ────────────────────────────────────────────────────
+    for i, t_min in enumerate(lap_cumulative_minutes(activity)):
         fig.add_vline(
             x=t_min,
             line_width=1,
             line_dash="dash",
-            line_color="#444",
-            annotation_text=f"L{i+2}",
+            line_color="#446",
+            annotation_text=f"L{i + 2}",
             annotation_position="top left",
-            annotation_font=dict(size=10, color="#666"),
+            annotation_font=dict(size=10, color="#778"),
         )
 
     return fig
 
 
-def build_hr_zones_bar(activity: Activity) -> Optional[go.Figure]:
+def build_hr_zones_bar(activity: Activity,
+                       uirevision: str = "activity") -> Optional[go.Figure]:
     """Horizontal bar chart of time in each HR zone."""
     if not activity.metrics or not activity.metrics.hr_zones:
         return None
-    hz = activity.metrics.hr_zones
-    zones  = ["Z1", "Z2", "Z3", "Z4", "Z5"]
-    times  = [hz.z1_s/60, hz.z2_s/60, hz.z3_s/60, hz.z4_s/60, hz.z5_s/60]
+    hz    = activity.metrics.hr_zones
+    zones = ["Z1", "Z2", "Z3", "Z4", "Z5"]
+    times = [hz.z1_s / 60, hz.z2_s / 60, hz.z3_s / 60,
+             hz.z4_s / 60, hz.z5_s / 60]
 
-    # Build threshold labels
-    thresh = hz.thresholds_bpm()   # [z2, z3, z4, z5]
-    labels = ["< Z2"]
+    thresh = hz.thresholds_bpm()
+    labels = ["< Z2 threshold"]
     for i, t in enumerate(thresh):
-        labels.append(f">= {int(t)} bpm" if t else f"Z{i+2}")
+        labels.append(f">= {int(t)} bpm" if t else f"Z{i + 2}")
 
     fig = go.Figure(go.Bar(
-        y=zones,
-        x=times,
+        y=zones, x=times,
         orientation="h",
         marker_color=_ZONE_COLORS,
         text=[f"{t:.0f} min" for t in times],
         textposition="outside",
         customdata=labels,
-        hovertemplate="%{y}: %{x:.1f} min  (%{customdata})<extra></extra>",
+        hovertemplate="%{y}: <b>%{x:.1f} min</b>  (%{customdata})<extra></extra>",
     ))
     fig.update_layout(
         template="plotly_dark",
@@ -156,8 +172,8 @@ def build_hr_zones_bar(activity: Activity) -> Optional[go.Figure]:
         title=dict(text="Time in HR Zones", font=dict(size=13)),
         showlegend=False,
         xaxis_title="minutes",
-        margin=dict(l=40, r=60, t=35, b=30),
-        uirevision="activity",
+        margin=dict(l=40, r=70, t=35, b=30),
+        uirevision=uirevision,
     )
     return fig
 
@@ -165,36 +181,25 @@ def build_hr_zones_bar(activity: Activity) -> Optional[go.Figure]:
 # ── Private helpers ────────────────────────────────────────────────────────────
 
 def _add_hr_zone_bands(fig, df: pd.DataFrame, activity: Activity, row: int):
-    """
-    Add horizontal coloured bands behind the HR trace, one per zone.
-    Uses actual bpm thresholds from the Suunto file when available.
-    """
     hz = activity.metrics and activity.metrics.hr_zones
     if not hz:
         return
 
-    hr_max = df["hr"].max() if df["hr"].notna().any() else 220
-    hr_max = max(hr_max * 1.05, hr_max + 5)
-
-    thresholds = hz.thresholds_bpm()   # [z2, z3, z4, z5]
-    # Fall back to 60/70/80/90 % of max HR if no thresholds stored
+    hr_max = (df["hr"].max() if df["hr"].notna().any() else 220) * 1.06
+    thresholds = hz.thresholds_bpm()
     if not any(thresholds):
         thresholds = [hr_max * p for p in (0.60, 0.70, 0.80, 0.90)]
 
     boundaries = [0] + [t for t in thresholds if t] + [hr_max]
-
-    # yref for this row: 'y' for row 1, 'y2' for row 2, etc.
     yref = "y" if row == 1 else f"y{row}"
 
     for i in range(len(boundaries) - 1):
-        lo = boundaries[i]
-        hi = boundaries[i + 1]
         color = _ZONE_COLORS[min(i, len(_ZONE_COLORS) - 1)]
         fig.add_shape(
             type="rect",
             xref="paper", yref=yref,
             x0=0, x1=1,
-            y0=lo, y1=hi,
+            y0=boundaries[i], y1=boundaries[i + 1],
             fillcolor=_alpha(color, 0.14),
             line_width=0,
             layer="below",
@@ -202,7 +207,6 @@ def _add_hr_zone_bands(fig, df: pd.DataFrame, activity: Activity, row: int):
 
 
 def _alpha(hex_color: str, a: float) -> str:
-    """Convert #rrggbb to rgba(r,g,b,a)."""
     h = hex_color.lstrip("#")
     r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
     return f"rgba({r},{g},{b},{a})"
