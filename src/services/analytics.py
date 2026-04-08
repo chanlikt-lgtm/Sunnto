@@ -8,6 +8,7 @@ Called by core/pipeline.py after processor.py has cleaned the samples.
 from ..models.activity import Activity
 from ..models.metrics import ActivityMetrics
 from ..utils.constants import MAX_VALID_PACE_MIN_KM
+from .sport_classifier import classify_sport
 
 
 def compute_metrics(activity: Activity) -> Activity:
@@ -51,6 +52,9 @@ def compute_metrics(activity: Activity) -> Activity:
     if "temperature" in df.columns and df["temperature"].notna().any():
         if m.avg_temp is None:
             m.avg_temp = round(float(df["temperature"].mean()), 1)
+
+    # ── Sport category — set once here, read by views ─────────────────────────
+    activity.sport_category = classify_sport(activity)
 
     # ── ADD NEW METRICS BELOW ──────────────────────────────────────────────────
     # Example future metrics:

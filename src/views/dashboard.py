@@ -56,13 +56,12 @@ def build_layout(activity_options: list, sport_options: list) -> html.Div:
 
 def build_main_content(activity, no_activity_msg: str = None,
                        uirevision: str = "activity"):
-    """Route to sport-specific layout based on sport category."""
+    """Route to sport-specific layout based on activity.sport_category."""
     if activity is None:
         return html.Div(html.P(no_activity_msg or "Select an activity from the sidebar.",
                                className="text-muted py-5 text-center"))
 
-    from ..services.sport_classifier import classify_sport
-    cat = classify_sport(activity)
+    cat = activity.sport_category
     if cat == "gym":
         return _build_gym_content(activity, uirevision)
     if cat == "sleep":

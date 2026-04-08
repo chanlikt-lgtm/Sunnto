@@ -26,6 +26,10 @@ class Activity:
     # Set by core/processor.py after cleaning — checked by services/analytics.py
     is_processed: bool = field(default=False, init=False, repr=False, compare=False)
 
+    # Set by services/analytics.compute_metrics() — read by views
+    # Values: 'endurance', 'gym', 'sleep', 'swimming'  (None = not yet enriched)
+    sport_category: Optional[str] = field(default=None, init=False, repr=False, compare=False)
+
     # ── Convenience properties ─────────────────────────────────────────────────
 
     @property
