@@ -7,7 +7,12 @@ from ..utils.datetime_utils import format_pace
 
 
 def chart_dataframe(activity: Activity) -> pd.DataFrame:
-    """Return a clean DataFrame ready for plotting."""
+    """Return a clean DataFrame ready for plotting.
+
+    INVARIANT: row count == len(activity.samples), order preserved.
+    The clientside hover callback maps hoverData.pointIndex → samples[i]
+    directly. Never drop rows here — only add or null columns.
+    """
     df = activity.to_dataframe()
     if df.empty:
         return df
