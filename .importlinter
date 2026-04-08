@@ -1,0 +1,30 @@
+[importlinter]
+root_packages =
+    src
+
+[importlinter:contract:core-no-services]
+name = core/ must not import services, controllers, or views
+type = forbidden
+source_modules =
+    src.core
+forbidden_modules =
+    src.services
+    src.controllers
+    src.views
+
+[importlinter:contract:services-no-controllers-views]
+name = services/ must not import controllers or views
+type = forbidden
+source_modules =
+    src.services
+forbidden_modules =
+    src.controllers
+    src.views
+
+[importlinter:contract:controllers-no-views]
+name = controllers/ must not import views
+type = forbidden
+source_modules =
+    src.controllers
+forbidden_modules =
+    src.views

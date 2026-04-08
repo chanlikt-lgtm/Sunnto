@@ -5,7 +5,6 @@ from typing import List, Optional
 from .loader import scan_folder, load_json
 from .parser import parse_suunto_json
 from .processor import process
-from ..services.analytics import compute_metrics
 from ..models.activity import Activity
 
 
@@ -26,7 +25,6 @@ def load_all(folder: str) -> List[Activity]:
             file_id, data = load_json(path)
             act = parse_suunto_json(data, file_id)
             act = process(act)          # clean: smooth, gap-fill
-            act = compute_metrics(act)  # summarise: avg HR, pace, temp, …
             activities.append(act)
             print(f"[pipeline] Loaded: {act.label}")
         except Exception as e:
@@ -42,8 +40,7 @@ def load_one(path: str) -> Optional[Activity]:
     try:
         file_id, data = load_json(path)
         act = parse_suunto_json(data, file_id)
-        act = process(act)
-        return compute_metrics(act)
+        return process(act)
     except Exception as e:
         print(f"[pipeline] Error loading {path}: {e}")
         return None

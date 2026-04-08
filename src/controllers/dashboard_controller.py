@@ -6,6 +6,7 @@ import os
 
 from ..core.pipeline import load_all
 from ..models.activity import Activity
+from ..services.analytics import compute_metrics
 from ..services.filters import by_date_preset, by_sport
 
 
@@ -20,7 +21,8 @@ class DashboardController:
     def ensure_loaded(self):
         if not self._loaded:
             folder = self._config["data"]["json_folder"]
-            self._all_activities = load_all(folder)
+            activities = load_all(folder)                        # load + parse + clean
+            self._all_activities = [compute_metrics(a) for a in activities]  # summarise
             self._loaded = True
 
     def reload(self):
